@@ -8,6 +8,11 @@ import matplotlib
 import io
 import urllib, base64
 
+import os
+import numpy as np
+from openai import OpenAI
+from dotenv import load_dotenv
+
 def home(request):
     #return HttpResponse('<h1>Welcome to Home Page</h1>')
     #return render(request, 'home.html')
@@ -123,3 +128,39 @@ def generate_bar_chart(data, xlabel, ylabel):
     buffer.close()
     graphic = base64.b64encode(image_png).decode('utf-8')
     return graphic
+
+def recommendation(request):
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '..' , 'openAI.env'))
+    client = OpenAI(api_key=os.environ.get('openai_apikey'))
+
+    def get_embedding(text):
+        sanitized_text = text.encode('utf-8', 'ignore').decode('utf-8')
+        response = client.embeddings.create(input=[sanitized_text], model="text-embedding-3-small")
+        return np.array(response.data[0].embedding, dtype=np.float32)
+
+    def cosine_similarity(a, b):
+        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+    if request.method == 'POST':
+        prompt = request.POST.get('prompt')
+        if prompt:
+            prompt_emb = get_embedding(prompt)
+            best_movie = None
+            max_similarity = -1
+
+            for movie in Movie.objects.all():
+                if movie.emb and len(movie.emb) > 0:
+                    movie_emb = np.frombuffer(movie.emb, dtype=np.float32)
+
+                    # Check if the embedding has the correct dimension (1536)
+                    if movie_emb.shape[0] != 1536:
+                        continue
+
+                    similarity = cosine_similarity(prompt_emb, movie_emb)
+                    if similarity > max_similarity:
+                        max_similarity = similarity
+                        best_movie = movie
+            
+            return render(request, 'recommendation.html', {'movie': best_movie, 'prompt': prompt})
+
+    return render(request, 'recommendation.html', {})

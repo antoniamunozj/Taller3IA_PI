@@ -7,3 +7,13 @@
 /*.env
 /images.zip
 /DjangoProjectBase/openAI.env
+
+# Database
+*.sqlite3
+
+# Python cache
+__pycache__/
+**/__pycache__/
+
+# Media files
+DjangoProjectBase/media/

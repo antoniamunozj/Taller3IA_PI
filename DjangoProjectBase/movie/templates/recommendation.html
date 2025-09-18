@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Movie Recommendation System</h2>
+    <p>Describe the kind of movie you want to see, and we'll recommend one for you based on the description!</p>
+    
+    <form method="POST" class="mb-4">
+        {% csrf_token %}
+        <div class="input-group">
+            <input type="text" class="form-control" name="prompt" placeholder="e.g., 'a movie about space travel' or 'gothic horror with a monster'" value="{{ prompt }}">
+            <button class="btn btn-primary" type="submit">Get Recommendation</button>
+        </div>
+    </form>
+
+    {% if movie %}
+        <hr>
+        <h4>Based on your prompt: "{{ prompt }}"</h4>
+        <h3>We recommend: <strong>{{ movie.title }}</strong></h3>
+        <div class="card mb-3">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="{{ movie.image.url }}" class="img-fluid rounded-start" alt="{{ movie.title }}">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ movie.title }}</h5>
+                        <p class="card-text">{{ movie.description }}</p>
+                        {% if movie.year %}
+                            <p class="card-text"><small class="text-muted">Year: {{ movie.year }}</small></p>
+                        {% endif %}
+                        {% if movie.genre %}
+                            <p class="card-text"><small class="text-muted">Genre: {{ movie.genre }}</small></p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
